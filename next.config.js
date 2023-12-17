@@ -1,5 +1,6 @@
-const { webpack } = require("next/dist/compiled/webpack/webpack");
+
 /** @type {import('next').NextConfig} */
+const { webpack } = require("next/dist/compiled/webpack/webpack");
 const nextConfig = {
   // output: 'export',
   // Optional: Add a trailing slash to all paths `/about` -> `/about/`
