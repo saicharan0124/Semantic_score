@@ -45,6 +45,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { writeFile, utils } from "xlsx";
 
 import { calculateCosineSimilarity } from "./SimilarityScore";
 import { calculateCosineSimilaritymatrix } from "./matrix";
@@ -65,7 +66,7 @@ export default function Main() {
         sourceSentence,
         sentenceToCompare
       );
-      setsimilarityscore(result * 100);
+      setsimilarityscore(result );
       // Handle the result as needed
     } catch (error) {
       // Handle errors
@@ -86,6 +87,12 @@ export default function Main() {
     }
     
   };
+  function writeToExcel(result, fileName) {
+    const worksheet = utils.aoa_to_sheet(result);
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    writeFile(workbook, fileName);
+  }
   
   return (
     <Tabs defaultValue="standard" className="w-[400px] mx-auto pt-12">
@@ -125,7 +132,6 @@ export default function Main() {
           </CardContent>
           <CardFooter>
             <AlertDialog>
-            
               <AlertDialogTrigger asChild>
                 <Button className="w-full" onClick={handleAnalyzeClick}>
                   Analyze
@@ -134,7 +140,7 @@ export default function Main() {
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    Likeness Index : {similarityscore}%
+                    Likeness Index : {similarityscore}
                   </AlertDialogTitle>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -153,7 +159,7 @@ export default function Main() {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="message">Sentences to compare</Label>
+              <Label htmlFor="message">Course Outcomes :</Label>
               <Textarea
                 placeholder="seperate each sentence by new line."
                 id="message"
@@ -176,7 +182,12 @@ export default function Main() {
                 <DynamicTable headers={headerarray} data={result} />
 
                 <DialogFooter>
-                  <Button type="submit">Ok!</Button>
+                  <Button
+                    type="submit"
+                    onClick={() => writeToExcel(result, "CourseOutcomes.xlsx")}
+                  >
+                    SaveAS.xlsx
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
