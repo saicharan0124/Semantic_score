@@ -95,7 +95,10 @@ export default function Main() {
   }
   
   return (
-    <Tabs defaultValue="standard" className="w-[400px] mx-auto pt-12">
+    <Tabs
+      defaultValue="standard"
+      className="w-[350px] mx-auto  my-auto pt-12 lg:w-[500px]"
+    >
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="standard">Standard</TabsTrigger>
         <TabsTrigger value="exception">Exception</TabsTrigger>
