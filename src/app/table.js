@@ -1,41 +1,25 @@
+import React from "react";
 import {
   Table,
   TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
   TableHeader,
   TableRow,
+  TableHead,
+  TableCell,
 } from "@/components/ui/table";
-export function DynamicTable({ headers, data }) {
-    const headersArray = Object.values(headers);
-    const dataArray = Object.values(data);
+
+export function DynamicTable({  data }) {
   return (
     <Table>
-
-      <TableHeader>
-        <TableRow>
-          {headersArray.map((header, index) => (
-            <TableHead key={index}>{header}</TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
       <TableBody>
-        {dataArray.slice(1).map((row, rowIndex) => (
+        {data.map((row, rowIndex) => (
           <TableRow key={rowIndex}>
             {row.map((cell, cellIndex) => (
-              <TableCell
-                key={cellIndex}
-                className={cellIndex === 0 ? "font-medium" : ""}
-              >
-                {cell}
-              </TableCell>
+              <TableCell key={cellIndex}>{cell}</TableCell>
             ))}
           </TableRow>
         ))}
       </TableBody>
- 
     </Table>
   );
 }

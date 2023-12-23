@@ -1,6 +1,20 @@
 import axios from "axios";
 
-export async function calculateCosineSimilaritymatrix(sentence1) {
+function convertStringToArray(sentenceString) {
+  // Split the input string into an array of sentences
+  const sentencesArray = sentenceString
+    .split("\n")
+    .map((sentence) => sentence.trim());
+
+  // Filter out empty sentences
+  const nonEmptySentences = sentencesArray.filter(
+    (sentence) => sentence !== ""
+  );
+
+  return nonEmptySentences;
+}
+
+export async function calculateCosineSimilaritymatrix(sentenceArray) {
   try {
     const temp = [
       "Apply the knowledge of mathematics, science, engineering fundamentals, and an engineering specialization to the solution of complex engineering problems.",
@@ -20,38 +34,34 @@ export async function calculateCosineSimilaritymatrix(sentence1) {
       "Participate in team hackathons and develop critical thinking skills via hands-on-experience in research experiments to become an entrepreneur or initiate a start-up.",
     ];
 
-    function convertStringToArray(sentenceString) {
-      // Split the input string into an array of sentences
-      const sentencesArray = sentenceString
-        .split("\n")
-        .map((sentence) => sentence.trim());
+    // Create an array of promises for each API call
+    const apiCalls = sentenceArray.map((sentence) => {
+      // Convert the sentence to an array using the provided function
+      const convertedSentence = convertStringToArray(sentence);
 
-      // Filter out empty sentences
-      const nonEmptySentences = sentencesArray.filter(
-        (sentence) => sentence !== ""
+      // Create data object for POST request
+      const data = {
+        sentences1: convertedSentence,
+        sentences2: temp,
+      };
+
+      // Make a POST request using Axios
+      return axios.post(
+        "https://saicharan1234-semanticscore.hf.space/calculate-cosine-similarity-tabulated",
+        data
       );
+    });
 
-      return nonEmptySentences;
-    }
-    const finalsentence=convertStringToArray(sentence1)
-    // Define the data to send in the POST request
-    const data = {
-      sentences1: finalsentence,
-      sentences2: temp,
-    };
+    // Use Promise.all to execute all API calls concurrently
+    const responses = await Promise.all(apiCalls);
 
-    console.log(data);
-
-    // Make the Axios POST request to your FastAPI endpoint
-    const response = await axios.post(
-      "https://saicharan1234-semanticscore.hf.space/calculate-cosine-similarity-tabulated",
-      data
+    // Extract the similarity tables from the responses
+    const similarityTables = responses.map(
+      (response) => response.data.cosine_similarity_table
     );
-
-    // Handle the response here
-    const similarityTable = response.data.cosine_similarity_table;
-
-    return similarityTable;
+        console.log(similarityTables)
+    // Return an array of similarity tables for each input sentence
+    return similarityTables;
   } catch (error) {
     // Handle any errors that occur during the request
     console.error("Error calculating similarity:", error);

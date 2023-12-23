@@ -34,6 +34,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+
 
 
 import {
@@ -55,10 +66,13 @@ export default function Main() {
   const [loading, setLoading] = useState(false);
   const [sourceSentence, setSourceSentence] = useState("");
   const [sentenceToCompare, setSentenceToCompare] = useState("");
-  const[similarityscore,setsimilarityscore]=useState("")
-  const[exceptionsentence,setexceptionsentence]=useState("")
-  const[result,setresult]=useState("")
+  const [similarityscore, setsimilarityscore] = useState("");
+  const [exceptionsentence, setexceptionsentence] = useState("");
+  const [result, setresult] = useState([]);
   const [headerarray, setheader] = useState("");
+  const [numTextAreas, setNumTextAreas] = useState(1); // Initial number of text areas
+  const [outcomes, setOutcomes] = useState(Array.from({ length: 1 }, () => "")); 
+
   const handleAnalyzeClick = async () => {
     try {
       setLoading(true);
@@ -66,34 +80,74 @@ export default function Main() {
         sourceSentence,
         sentenceToCompare
       );
-      setsimilarityscore(result );
+      setsimilarityscore(result);
       // Handle the result as needed
     } catch (error) {
       // Handle errors
       console.error("Error:", error);
     }
   };
-    const handleAnalyzeClick2 = async () => {
+  const handleAnalyzeClick2 = async () => {
     try {
-      const result = await calculateCosineSimilaritymatrix(exceptionsentence)
-      setresult(result)
-      const headerArray = result[0];
-      setheader(headerArray)
-      console.log(result)
+      console.log(outcomes)
+      const result = await calculateCosineSimilaritymatrix(outcomes);
+      setresult(result);
+      const headerArray = result[0][0];
+      console.log(headerArray)
+      setheader(headerArray);
+      console.log(result);
       // Handle the result as needed
     } catch (error) {
       // Handle errors
       console.error("Error:", error);
     }
-    
   };
+
+  const increaseTextAreas = () => {
+    setNumTextAreas(numTextAreas + 1);
+     setOutcomes([...outcomes, ""]);
+  };
+
+  const decreaseTextAreas = () => {
+    if (numTextAreas > 1) {
+      setNumTextAreas(numTextAreas - 1);
+      setOutcomes(outcomes.slice(0, -1)); 
+    }
+  };
+
+  const handleOutcomeChange = (index, value) => {
+    const newOutcomes = [...outcomes];
+    newOutcomes[index] = value;
+    setOutcomes(newOutcomes);
+  };
+
+  // function writeToExcel(result, fileName) {
+  //   const worksheet = utils.aoa_to_sheet(result);
+  //   const workbook = utils.book_new();
+  //   utils.book_append_sheet(workbook, worksheet, "Sheet1");
+  //   writeFile(workbook, fileName);
+  // }
   function writeToExcel(result, fileName) {
-    const worksheet = utils.aoa_to_sheet(result);
     const workbook = utils.book_new();
-    utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+    // Iterate over each array of arrays in result
+    result.forEach((innerArray, index) => {
+      const worksheet = utils.aoa_to_sheet(innerArray);
+
+      // Append the worksheet to the workbook
+      utils.book_append_sheet(workbook, worksheet, `Sheet${index + 1}`);
+
+      // Add an empty row after each inner array, except for the last one
+      if (index < result.length - 1) {
+        utils.sheet_add_aoa(worksheet, [[]]);
+      }
+    });
+
+    // Write the workbook to the file
     writeFile(workbook, fileName);
   }
-  
+
+
   return (
     <Tabs
       defaultValue="standard"
@@ -160,17 +214,31 @@ export default function Main() {
             <CardTitle>Compare.</CardTitle>
             <CardDescription>Comparing with Program Outcomes</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="message">Course Outcomes :</Label>
-              <Textarea
-                placeholder="seperate each sentence by new line."
-                id="message"
-                value={exceptionsentence}
-                onChange={(e) => setexceptionsentence(e.target.value)}
-              />
+
+          <CardContent className="space-y-3">
+            {[...Array(numTextAreas)].map((_, index) => (
+              <div key={index} className="flex flex-col space-y-1.5">
+                <Label htmlFor={`outcome${index + 1}`}>{`course ${
+                  index + 1
+                }:`}</Label>
+                <Textarea
+                  id={`outcome${index + 1}`}
+                  value={outcomes[index] || ""}
+                  onChange={(e) => handleOutcomeChange(index, e.target.value)}
+                />
+              </div>
+            ))}
+            <div className="flex justify-between mt-2">
+              <Button variant="ghost" onClick={decreaseTextAreas}>
+                -
+              </Button>
+
+              <Button variant="ghost" onClick={increaseTextAreas}>
+                +
+              </Button>
             </div>
           </CardContent>
+
           <CardFooter>
             <Dialog>
               <DialogTrigger asChild>
@@ -178,11 +246,14 @@ export default function Main() {
                   Analyze
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="max-h-[400px] overflow-y-auto sm:max-w-[425px] ">
                 <DialogHeader>
                   <DialogTitle>PO.</DialogTitle>
                 </DialogHeader>
-                <DynamicTable headers={headerarray} data={result} />
+
+                {result.map((dataArray, index) => (
+                  <DynamicTable key={index} data={dataArray} />
+                ))}
 
                 <DialogFooter>
                   <Button
